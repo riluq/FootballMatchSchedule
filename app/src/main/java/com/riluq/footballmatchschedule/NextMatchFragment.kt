@@ -1,11 +1,30 @@
 package com.riluq.footballmatchschedule
 
 
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v4.widget.SwipeRefreshLayout
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.*
+import com.google.gson.Gson
+import com.riluq.footballmatchschedule.adapter.MatchAdapter
+import com.riluq.footballmatchschedule.api.ApiRepository
+import com.riluq.footballmatchschedule.model.PrevMatch
+import com.riluq.footballmatchschedule.presenter.NextMatchPresenter
+import com.riluq.footballmatchschedule.utils.invisible
+import com.riluq.footballmatchschedule.utils.visible
+import com.riluq.footballmatchschedule.view.PrevMatchView
+import org.jetbrains.anko.*
+import org.jetbrains.anko.recyclerview.v7.recyclerView
+import org.jetbrains.anko.support.v4.ctx
+import org.jetbrains.anko.support.v4.onRefresh
+import org.jetbrains.anko.support.v4.startActivity
+import org.jetbrains.anko.support.v4.swipeRefreshLayout
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -17,16 +36,124 @@ private const val ARG_PARAM2 = "param2"
  * A simple [Fragment] subclass.
  *
  */
-class NextMatchFragment : Fragment() {
+class NextMatchFragment : Fragment(), AnkoComponent<Context>, PrevMatchView {
+    private lateinit var listEvent: RecyclerView
+
+    private lateinit var progressBar: ProgressBar
+
+    private lateinit var swipeRefresh: SwipeRefreshLayout
+    private var prevMatchs: MutableList<PrevMatch> = mutableListOf()
+    private lateinit var presenter: NextMatchPresenter
+
+    private lateinit var spinner: Spinner
+
+    private lateinit var adapter: MatchAdapter
+
+    private lateinit var leagueId: String
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+
+        val spinnerItems = resources.getStringArray(R.array.league)
+        val spinnerAdapter = ArrayAdapter(ctx, android.R.layout.simple_spinner_dropdown_item, spinnerItems)
+        spinner.adapter = spinnerAdapter
+
+        adapter = MatchAdapter(requireActivity(), prevMatchs){
+            startActivity<MatchDetailActivity>(
+                    "idEvent" to "${it.idEvent}",
+                    "teamIdHome" to "${it.teamIdHome}",
+                    "teamIdAway" to "${it.teamIdAway}")
+        }
+        listEvent.adapter = adapter
+
+        val request = ApiRepository()
+        val gson = Gson()
+        presenter = NextMatchPresenter(this, request, gson)
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val leagueIdItemSelected = resources.getStringArray(R.array.league_id)
+                when (position) {
+                    0 -> leagueId = leagueIdItemSelected[0]
+                    1 -> leagueId = leagueIdItemSelected[1]
+                    2 -> leagueId = leagueIdItemSelected[2]
+                    3 -> leagueId = leagueIdItemSelected[3]
+                    4 -> leagueId = leagueIdItemSelected[4]
+                    5 -> leagueId = leagueIdItemSelected[5]
+                }
+                presenter.getNextMatchList(leagueId)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+        }
+
+        swipeRefresh.onRefresh {
+            presenter.getNextMatchList(leagueId)
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_next_match, container, false)
+        return createView(AnkoContext.create(ctx))
     }
 
-    companion object {
-        fun newInstance(): NextMatchFragment = NextMatchFragment()
+
+    override fun createView(ui: AnkoContext<Context>): View = with(ui){
+        linearLayout {
+            lparams(width = matchParent, height = wrapContent)
+            orientation = LinearLayout.VERTICAL
+            padding = dip(16)
+
+            spinner = spinner {
+                id = R.id.spinner
+            }
+            swipeRefresh = swipeRefreshLayout {
+                id = R.id.srl_prev_match
+                setColorSchemeResources(R.color.colorAccent,
+                        android.R.color.holo_green_light,
+                        android.R.color.holo_orange_light,
+                        android.R.color.holo_red_light)
+
+
+                relativeLayout {
+                    lparams(width = matchParent, height = wrapContent)
+
+                    listEvent = recyclerView {
+                        id = R.id.rv_prev_match
+                        lparams(width = matchParent, height = wrapContent)
+                        layoutManager = LinearLayoutManager(ctx)
+
+                    }
+
+                    progressBar = progressBar {
+                        id = R.id.pb_prev_match
+                    }.lparams{
+                        centerHorizontally()
+                    }
+                }
+            }
+
+        }
+    }
+
+    override fun showLoading() {
+        progressBar.visible()
+    }
+
+    override fun hideLoading() {
+        progressBar.invisible()
+    }
+
+    override fun showPrevMatchList(data: List<PrevMatch>) {
+        swipeRefresh.isRefreshing = false
+        prevMatchs.clear()
+        prevMatchs.addAll(data)
+        adapter.notifyDataSetChanged()
     }
 
 }
