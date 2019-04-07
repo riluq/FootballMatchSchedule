@@ -2,8 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.riluq.footballmatchschedule">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- <intent-filter> -->
+    <!-- <action android:name="android.intent.action.MAIN" /> -->
+    <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+    <!-- </intent-filter> -->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -11,15 +15,26 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name">
+            android:name=".Main2Activity"
+            android:label="@string/football_match_schedule"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".MatchDetailActivity" />
+
+        <activity
+            android:name=".TeamDetail2Activity"
+            android:label="@string/title_activity_team_detail2"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".SearchResultActivity" />
+        <activity android:name=".PlayerDetailsActivity" />
     </application>
 
 </manifest>

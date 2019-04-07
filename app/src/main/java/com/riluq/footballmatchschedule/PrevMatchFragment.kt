@@ -3,90 +3,144 @@ package com.riluq.footballmatchschedule
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v4.widget.SwipeRefreshLayout
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
-import org.jetbrains.anko.*
-
 import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.ProgressBar
+import android.widget.*
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.gson.Gson
 import com.riluq.footballmatchschedule.R.color.colorAccent
+import com.riluq.footballmatchschedule.adapter.MatchAdapter
+import com.riluq.footballmatchschedule.api.ApiRepository
+import com.riluq.footballmatchschedule.model.PrevMatch
+import com.riluq.footballmatchschedule.presenter.PrevMatchPresenter
+import com.riluq.footballmatchschedule.utils.NO_PARAMETER
+import com.riluq.footballmatchschedule.utils.invisible
+import com.riluq.footballmatchschedule.utils.visible
+import com.riluq.footballmatchschedule.view.PrevMatchView
+import org.jetbrains.anko.*
 import org.jetbrains.anko.recyclerview.v7.recyclerView
 import org.jetbrains.anko.support.v4.ctx
+import org.jetbrains.anko.support.v4.onRefresh
+import org.jetbrains.anko.support.v4.startActivity
 import org.jetbrains.anko.support.v4.swipeRefreshLayout
 
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
 /**
  * A simple [Fragment] subclass.
  *
  */
 class PrevMatchFragment : Fragment(), AnkoComponent<Context>, PrevMatchView {
+
     private lateinit var listEvent: RecyclerView
 
     private lateinit var progressBar: ProgressBar
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private var prevMatchs: MutableList<PrevMatch> = mutableListOf()
 
-    private lateinit var presenter: PrevMatchPresenter
-    private lateinit var adapter: PrevMatchAdapter
+    private lateinit var spinner: Spinner
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+    private lateinit var prevPresenter: PrevMatchPresenter
+    private lateinit var adapter: MatchAdapter
 
-        adapter = PrevMatchAdapter(requireContext(), prevMatchs)
+    private lateinit var leagueId: String
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+
+
+        val spinnerItems = resources.getStringArray(R.array.league)
+        val spinnerAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, spinnerItems)
+        spinner.adapter = spinnerAdapter
+
+        adapter = MatchAdapter(requireActivity(), prevMatchs){
+            startActivity<MatchDetailActivity>(
+                    "idEvent" to "${it.idEvent}",
+                    "teamIdHome" to "${it.teamIdHome}",
+                    "teamIdAway" to "${it.teamIdAway}")
+        }
         listEvent.adapter = adapter
+
 
         val request = ApiRepository()
         val gson = Gson()
-        presenter = PrevMatchPresenter(this, request, gson)
-        presenter.getPrevMatchList()
+        prevPresenter = PrevMatchPresenter(this, request, gson)
 
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val leagueIdItemSelected = resources.getStringArray(R.array.league_id)
+                when (position) {
+                    0 -> leagueId = leagueIdItemSelected[0]
+                    1 -> leagueId = leagueIdItemSelected[1]
+                    2 -> leagueId = leagueIdItemSelected[2]
+                    3 -> leagueId = leagueIdItemSelected[3]
+                    4 -> leagueId = leagueIdItemSelected[4]
+                    5 -> leagueId = leagueIdItemSelected[5]
+                }
+                prevPresenter.getPrevMatchList(leagueId, NO_PARAMETER)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+        }
+
+
+
+        swipeRefresh.onRefresh {
+            prevPresenter.getPrevMatchList(leagueId, NO_PARAMETER)
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
         return createView(AnkoContext.create(ctx))
     }
 
-    companion object {
-        fun newInstance(): PrevMatchFragment = PrevMatchFragment()
-    }
+
+
 
     override fun createView(ui: AnkoContext<Context>): View = with(ui) {
+
         linearLayout {
             lparams(width = matchParent, height = wrapContent)
             orientation = LinearLayout.VERTICAL
+
             padding = dip(16)
 
+            spinner = spinner {
+                id = R.id.spinner
+            }
             swipeRefresh = swipeRefreshLayout {
+                id = R.id.srl_prev_match
                 setColorSchemeResources(colorAccent,
                         android.R.color.holo_green_light,
                         android.R.color.holo_orange_light,
                         android.R.color.holo_red_light)
-            }
 
-            relativeLayout {
-                lparams(width = matchParent, height = wrapContent)
 
-                listEvent = recyclerView {
+                relativeLayout {
                     lparams(width = matchParent, height = wrapContent)
-                    layoutManager = LinearLayoutManager(ctx)
-                }
 
-                progressBar = progressBar {
-                }.lparams{
-                    centerHorizontally()
+                    listEvent = recyclerView {
+                        id = R.id.rv_prev_match
+                        lparams(width = matchParent, height = wrapContent)
+                        layoutManager = LinearLayoutManager(ctx)
+                    }
+
+                    progressBar = progressBar {
+                        id = R.id.pb_prev_match
+                    }.lparams{
+                        centerHorizontally()
+                    }
                 }
             }
-
-
         }
     }
 
@@ -104,5 +158,7 @@ class PrevMatchFragment : Fragment(), AnkoComponent<Context>, PrevMatchView {
         prevMatchs.addAll(data)
         adapter.notifyDataSetChanged()
     }
+
+
 
 }
