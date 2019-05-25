@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="rv_prev_match" type="id" />
+    <item name="pb_prev_match" type="id" />
+    <item name="srl_prev_match" type="id" />
+    <item name="tv_date_event_detail" type="id" />
+    <item name="img_logo_team_home_detail" type="id" />
+    <item name="tv_nama_team_home" type="id" />
+    <item name="tv_score_team_home" type="id" />
+    <item name="tv_score_team_away" type="id" />
+    <item name="img_logo_team_away_detail" type="id" />
+    <item name="spinner" type="id" />
+    <item name="edt_search" type="id" />
+    <item name="toolbar_container" type="id" />
+    <item name="search_view" type="id" />
+    <item name="tab_layout" type="id" />
+    <item name="pager" type="id" />
+    <item name="view_pager" type="id" />
+    <item name="team_badge" type="id" />
+    <item name="team_name" type="id" />
+    <item name="list_team" type="id" />
+    <item name="list_player" type="id" />
+</resources>

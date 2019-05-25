@@ -90,9 +90,11 @@ class SearchResultActivity : AppCompatActivity(), PrevMatchView, TeamsView {
         pb_search.invisible()
     }
 
-    override fun showPrevMatchList(data: List<PrevMatch>) {
+    override fun showPrevMatchList(data: List<PrevMatch>?) {
         prevMatchs.clear()
-        prevMatchs.addAll(data)
+        if (data != null) {
+            prevMatchs.addAll(data)
+        }
         matchAdapter.notifyDataSetChanged()
     }
 

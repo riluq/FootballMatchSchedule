@@ -149,10 +149,12 @@ class NextMatchFragment : Fragment(), AnkoComponent<Context>, PrevMatchView {
         progressBar.invisible()
     }
 
-    override fun showPrevMatchList(data: List<PrevMatch>) {
+    override fun showPrevMatchList(data: List<PrevMatch>?) {
         swipeRefresh.isRefreshing = false
         prevMatchs.clear()
-        prevMatchs.addAll(data)
+        if (data != null) {
+            prevMatchs.addAll(data)
+        }
         adapter.notifyDataSetChanged()
     }
 
